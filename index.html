@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Realistic anatomical human heart simulation with synchronized real-time ECG line, 3D pointer orientation, and heart care guide.">
+  <meta name="theme-color" content="#030508">
+  <title>CardioSync // Real Anatomical Heart & Live ECG</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Ambient Space Canvas for Floating Bioluminescent Dust Particles -->
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+
+  <!-- Full-Screen Dashboard Layout -->
+  <main class="dashboard-container" id="hero">
+    
+    <!-- Top Telemetry & Vitals HUD -->
+    <header class="dashboard-header">
+      <div class="brand-badge">
+        <span class="brand-dot"></span>
+        <div class="brand-text">
+          <span class="brand-title">CARDIOSYNC</span>
+          <span class="brand-sub">REAL ANATOMICAL TELEMETRY</span>
+        </div>
+      </div>
+
+      <!-- Real-Time Hemodynamic Vitals Bar -->
+      <div class="vitals-strip" role="region" aria-label="Live Cardiac Vitals">
+        <div class="vital-item main-hr" id="vitalBadge">
+          <span class="vital-led" id="ecgIndicator"></span>
+          <div class="vital-data">
+            <div class="vital-val-row">
+              <span class="vital-number" id="bpmDisplay">75</span>
+              <span class="vital-unit">BPM</span>
+            </div>
+            <span class="vital-caption" id="rhythmStatus">Normal Sinus Rhythm</span>
+          </div>
+        </div>
+
+        <div class="vital-divider" aria-hidden="true"></div>
+
+        <div class="vital-item">
+          <span class="vital-mini-icon">⚡</span>
+          <div class="vital-data">
+            <span class="vital-number" id="bpDisplay">118/76</span>
+            <span class="vital-caption">Blood Pressure (mmHg)</span>
+          </div>
+        </div>
+
+        <div class="vital-divider" aria-hidden="true"></div>
+
+        <div class="vital-item">
+          <span class="vital-mini-icon">🫁</span>
+          <div class="vital-data">
+            <span class="vital-number" id="spo2Display">99%</span>
+            <span class="vital-caption">Oxygen Saturation</span>
+          </div>
+        </div>
+
+        <div class="vital-divider" aria-hidden="true"></div>
+
+        <div class="vital-item">
+          <span class="vital-mini-icon">🩸</span>
+          <div class="vital-data">
+            <span class="vital-number" id="cardiacOutputDisplay">5.2</span>
+            <span class="vital-caption">Cardiac Output (L/min)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Header Action Controls -->
+      <div class="header-actions">
+        <button class="sound-toggle-btn" id="audioToggleBtn" aria-label="Toggle Heartbeat Audio" title="Toggle synthesized heartbeat audio">
+          <span class="audio-icon" id="audioIcon">🔇</span>
+          <span class="audio-label" id="audioLabel">Sound OFF</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace (Left Console + Real Heart Center) -->
+    <div class="dashboard-body">
+      
+      <!-- Left-Side Heart Care Console (Increased Size) -->
+      <aside class="care-console" id="heartCarePanel" aria-label="Heart Care Guide">
+        <div class="console-glass-header">
+          <div class="console-title-group">
+            <span class="console-beacon"></span>
+            <div>
+              <h2 class="console-title">Heart Care Protocol</h2>
+              <span class="console-sub">Essential Cardiac Health Points</span>
+            </div>
+          </div>
+          <button class="console-toggle-btn" id="careToggleBtn" aria-label="Minimize panel" title="Minimize panel">
+            <span class="toggle-icon">‹</span>
+          </button>
+        </div>
+
+        <p class="console-hint">Select any point to inspect physiological care advice:</p>
+
+        <!-- Care Points Accordion -->
+        <div class="care-accordion" id="careAccordion">
+          
+          <!-- Point 1 -->
+          <article class="care-card active" data-point="cardio">
+            <button class="care-card-header" aria-expanded="true">
+              <div class="card-icon-wrap cardio">🏃‍♂️</div>
+              <div class="card-title-group">
+                <span class="card-step">POINT 01 // ENDURANCE</span>
+                <h3 class="card-name">Daily Aerobic Activity</h3>
+              </div>
+              <span class="card-arrow">›</span>
+            </button>
+            <div class="care-card-content">
+              <div class="content-inner">
+                <p>Engage in <strong>30 minutes of moderate aerobic cardio</strong> (brisk walking, cycling, swimming) daily.</p>
+                <div class="tip-tags">
+                  <span class="tag">Strengthens Myocardium</span>
+                  <span class="tag">Lowers Resting HR</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Point 2 -->
+          <article class="care-card" data-point="diet">
+            <button class="care-card-header" aria-expanded="false">
+              <div class="card-icon-wrap diet">🥗</div>
+              <div class="card-title-group">
+                <span class="card-step">POINT 02 // NUTRITION</span>
+                <h3 class="card-name">Arterial-Smart Diet</h3>
+              </div>
+              <span class="card-arrow">›</span>
+            </button>
+            <div class="care-card-content">
+              <div class="content-inner">
+                <p>Fuel with <strong>leafy greens, omega-3 fatty acids, and berries</strong>. Limit saturated trans-fats and excess sodium to preserve endothelial elasticity and prevent plaque.</p>
+                <div class="tip-tags">
+                  <span class="tag">Clear Arteries</span>
+                  <span class="tag">Reduces LDL</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Point 3 -->
+          <article class="care-card" data-point="hydration">
+            <button class="care-card-header" aria-expanded="false">
+              <div class="card-icon-wrap hydration">💧</div>
+              <div class="card-title-group">
+                <span class="card-step">POINT 03 // VISCOSITY</span>
+                <h3 class="card-name">Optimal Hydration</h3>
+              </div>
+              <span class="card-arrow">›</span>
+            </button>
+            <div class="care-card-content">
+              <div class="content-inner">
+                <p>Maintain <strong>2.5 to 3 liters of pure water intake</strong>. Proper hydration prevents hemoconcentration, lowering strain on the left ventricle during ejection.</p>
+                <div class="tip-tags">
+                  <span class="tag">Optimal Blood Volume</span>
+                  <span class="tag">Smooth Flow</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Point 4 -->
+          <article class="care-card" data-point="stress">
+            <button class="care-card-header" aria-expanded="false">
+              <div class="card-icon-wrap stress">🧘</div>
+              <div class="card-title-group">
+                <span class="card-step">POINT 04 // VAGAL TONE</span>
+                <h3 class="card-name">Stress & Blood Pressure</h3>
+              </div>
+              <span class="card-arrow">›</span>
+            </button>
+            <div class="care-card-content">
+              <div class="content-inner">
+                <p>Practice <strong>5 minutes of rhythmic deep box breathing</strong>. Downregulates cortisol and adrenaline surges, protecting arterial linings against hypertension.</p>
+                <div class="tip-tags">
+                  <span class="tag">Vagal Stimulation</span>
+                  <span class="tag">Stabilizes BP</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Point 5 -->
+          <article class="care-card" data-point="sleep">
+            <button class="care-card-header" aria-expanded="false">
+              <div class="card-icon-wrap sleep">😴</div>
+              <div class="card-title-group">
+                <span class="card-step">POINT 05 // REPAIR</span>
+                <h3 class="card-name">Nocturnal Cellular Sleep</h3>
+              </div>
+              <span class="card-arrow">›</span>
+            </button>
+            <div class="care-card-content">
+              <div class="content-inner">
+                <p>Prioritize <strong>7 to 9 hours of uninterrupted deep sleep</strong>. During deep slow-wave cycles, nocturnal BP dipping enables myocardial cellular repair and rhythm reset.</p>
+                <div class="tip-tags">
+                  <span class="tag">Circadian Reset</span>
+                  <span class="tag">Tissue Healing</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </aside>
+
+      <!-- Mobile Care Points Drawer Trigger -->
+      <button class="mobile-drawer-trigger" id="mobileCareBtn" aria-label="Open Heart Care Guide">
+        <span class="drawer-icon">🫀</span> Heart Care Guide
+      </button>
+
+      <!-- Center Real Heart Stage -->
+      <section class="heart-stage" id="heartStage" aria-label="Real Anatomical Human Heart">
+        
+        <!-- Volumetric Ambient Spotlight & Shockwave -->
+        <div class="cardiac-spotlight" id="ambientGlow" aria-hidden="true"></div>
+        <div class="cardiac-sonar-ring" id="cardiacShockwave" aria-hidden="true"></div>
+
+        <!-- Real Anatomical Heart 3D Rotator Wrapper -->
+        <div class="real-heart-wrapper" id="heartRotator" role="img" aria-label="Real anatomical human heart with continuous heartbeat and 3D pointer tracking">
+          
+          <!-- Pulsing Heart Container -->
+          <div class="real-heart-pulse" id="heartPulse">
+            <img
+              src="images/real_heart.png"
+              alt="Real Anatomical Human Heart"
+              class="real-heart-img"
+              id="realHeartImg"
+              draggable="false"
+            />
+            
+            <!-- Dynamic Arterial Blood Flow & Radiance Glow Overlay -->
+            <div class="heart-artery-glow" id="arteryGlow" aria-hidden="true"></div>
+            
+            <!-- Real-Time Specular Glint (Moves with Pointer) -->
+            <div class="heart-specular-glint" id="specularGlint" aria-hidden="true"></div>
+          </div>
+
+          <!-- Dynamic Floor Shadow -->
+          <div class="heart-floor-shadow" aria-hidden="true"></div>
+        </div>
+
+        <!-- 3D Orientation Readout Tag -->
+        <div class="stage-hud-badge">
+          <span class="hud-crosshair">✦</span>
+          <span class="hud-angle-text" id="rotationFeedback">Anterior View (0.0°)</span>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Bottom Telemetry Console (Live CRT Oscilloscope + Heart Rate Controls) -->
+    <footer class="telemetry-console">
+      <div class="console-upper-meta">
+        <div class="lead-info">
+          <span class="lead-badge">LEAD II</span>
+          <span class="lead-spec">25 mm/s • 10 mm/mV</span>
+          <span class="lead-filter">0.05-150Hz Diagnostic</span>
+        </div>
+
+        <!-- Real-Time Cardiac Phase Indicator -->
+        <div class="phase-indicator-pill">
+          <span class="phase-dot" id="phaseDot"></span>
+          <span class="phase-name" id="phaseName">Ventricular Diastole</span>
+        </div>
+      </div>
+
+      <!-- Real-Time Sweeping Oscilloscope Display -->
+      <div class="ecg-monitor-frame" id="ecgDisplayBox">
+        <canvas id="ecgCanvas" aria-label="Live ECG Waveform Monitor"></canvas>
+        <div class="ecg-crt-scanlines"></div>
+        <div class="ecg-grid-overlay"></div>
+      </div>
+
+      <!-- Velocity & Pace Controls Bar -->
+      <div class="telemetry-controls-row">
+        <!-- Preset Speed Pills -->
+        <div class="pace-presets" role="group" aria-label="Cardiac Pace Presets">
+          <button class="pace-btn" data-bpm="55" title="Resting Pace (Bradycardia / Sleep)">
+            <span class="pace-dot"></span> 55 BPM <span class="pace-label">Rest</span>
+          </button>
+          <button class="pace-btn active" data-bpm="75" title="Normal Sinus Pace">
+            <span class="pace-dot"></span> 75 BPM <span class="pace-label">Normal</span>
+          </button>
+          <button class="pace-btn" data-bpm="115" title="Elevated Pace (Active / Cardio)">
+            <span class="pace-dot"></span> 115 BPM <span class="pace-label">Active</span>
+          </button>
+          <button class="pace-btn" data-bpm="155" title="High Speed Pace (Cardio Peak / Sprint)">
+            <span class="pace-dot"></span> 155 BPM <span class="pace-label">Sprint</span>
+          </button>
+        </div>
+
+        <!-- Precision Continuous Speed Range Slider -->
+        <div class="pace-slider-unit">
+          <div class="slider-text-group">
+            <span class="slider-title">Dynamic Velocity:</span>
+            <span class="slider-val-badge"><span id="sliderValue">75</span> BPM</span>
+          </div>
+          <input type="range" id="speedSlider" min="40" max="180" value="75" step="1" aria-label="Cardiac Pace Velocity Slider">
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Main JavaScript Engine -->
+  <script src="js/main.js"></script>
+</body>
+</html>

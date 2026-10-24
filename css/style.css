@@ -1,0 +1,1140 @@
+/* ==========================================================================
+   CardioSync // Futuristic 3D Heart & Telemetry Dashboard
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   CSS Custom Properties & Design Tokens
+   -------------------------------------------------------------------------- */
+:root {
+  --bg-space: #030508;
+  --bg-card: rgba(10, 14, 24, 0.74);
+  --bg-card-hover: rgba(16, 22, 38, 0.85);
+  
+  --crimson-core: #ff2a5f;
+  --crimson-glow: rgba(255, 42, 95, 0.45);
+  --crimson-ambient: rgba(255, 26, 75, 0.16);
+  
+  --ecg-emerald: #00f5a0;
+  --ecg-emerald-glow: rgba(0, 245, 160, 0.75);
+  
+  --cyan-accent: #00d2ff;
+  
+  --text-white: #f5f7fc;
+  --text-muted: #8e97af;
+  --text-subtle: #4b546b;
+  
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(255, 42, 95, 0.4);
+  
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --heart-size: clamp(200px, 24vw, 310px);
+  --cardiac-cycle-duration: 0.8s; /* Dynamically updated by JS */
+}
+
+/* --------------------------------------------------------------------------
+   Reset & Baseline
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-space);
+  color: var(--text-white);
+  font-family: var(--font-main);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* --------------------------------------------------------------------------
+   Background Ambient Particle Canvas
+   -------------------------------------------------------------------------- */
+#particleCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Full Dashboard Container Layout
+   -------------------------------------------------------------------------- */
+.dashboard-container {
+  position: relative;
+  z-index: 5;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(0.6rem, 1.5vh, 1.2rem) clamp(0.8rem, 2vw, 2rem);
+  background: radial-gradient(ellipse at 50% 38%, #090e1a 0%, var(--bg-space) 80%);
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Top Telemetry & Vitals HUD Header
+   -------------------------------------------------------------------------- */
+.dashboard-header {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.4rem;
+}
+
+/* Brand */
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--crimson-core);
+  box-shadow: 0 0 12px var(--crimson-core);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #ffffff;
+}
+
+.brand-sub {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+/* Real-Time Vitals Strip */
+.vitals-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.35rem 1.1rem;
+  background: var(--bg-card);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.vital-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.vital-item.main-hr {
+  padding-right: 0.3rem;
+}
+
+.vital-led {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--ecg-emerald);
+  box-shadow: 0 0 10px var(--ecg-emerald);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.vital-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.vital-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.vital-number {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.vital-item.main-hr .vital-number {
+  color: #00ffaa;
+  font-size: 1.15rem;
+}
+
+.vital-unit {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.vital-caption {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.vital-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.vital-mini-icon {
+  font-size: 0.85rem;
+}
+
+/* Sound Toggle */
+.sound-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.85rem;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 9999px;
+  color: var(--text-muted);
+  font-family: var(--font-main);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+}
+
+.sound-toggle-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-white);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.sound-toggle-btn.active {
+  background: rgba(0, 245, 160, 0.12);
+  border-color: rgba(0, 245, 160, 0.45);
+  color: #00ffaa;
+  box-shadow: 0 0 15px rgba(0, 245, 160, 0.18);
+}
+
+/* --------------------------------------------------------------------------
+   Main Workspace Body (Left Console + 3D Stage)
+   -------------------------------------------------------------------------- */
+.dashboard-body {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Left-Side Heart Care Console (Increased Size)
+   -------------------------------------------------------------------------- */
+.care-console {
+  position: absolute;
+  left: clamp(0.75rem, 1.6vw, 1.8rem);
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(340px, 28vw, 440px);
+  max-height: calc(100vh - 140px);
+  background: var(--bg-card);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 1.35rem 1.25rem;
+  z-index: 25;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+
+.care-console::-webkit-scrollbar {
+  width: 5px;
+}
+.care-console::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 5px;
+}
+
+.care-console.collapsed {
+  transform: translateY(-50%) translateX(calc(-100% + 54px));
+}
+
+.console-glass-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.75rem;
+}
+
+.console-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.console-beacon {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--crimson-core);
+  box-shadow: 0 0 10px var(--crimson-core);
+}
+
+.console-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-white);
+}
+
+.console-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.console-toggle-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.console-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.toggle-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+
+.care-console.collapsed .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.console-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Accordion Cards */
+.care-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.care-card {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.care-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.care-card.active {
+  background: rgba(255, 42, 95, 0.09);
+  border-color: rgba(255, 42, 95, 0.45);
+  box-shadow: 0 6px 22px rgba(255, 42, 95, 0.16);
+}
+
+.care-card-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.95rem;
+  background: none;
+  border: none;
+  color: var(--text-white);
+  font-family: var(--font-main);
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+.card-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.card-icon-wrap.cardio { background: rgba(0, 245, 160, 0.14); }
+.card-icon-wrap.diet { background: rgba(255, 170, 0, 0.14); }
+.card-icon-wrap.hydration { background: rgba(0, 210, 255, 0.14); }
+.card-icon-wrap.stress { background: rgba(180, 100, 255, 0.14); }
+.card-icon-wrap.sleep { background: rgba(100, 150, 255, 0.14); }
+
+.card-title-group {
+  flex: 1;
+}
+
+.card-step {
+  display: block;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-subtle);
+}
+
+.care-card.active .card-step {
+  color: var(--crimson-core);
+}
+
+.card-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-white);
+  line-height: 1.25;
+}
+
+.card-arrow {
+  font-size: 1.1rem;
+  color: var(--text-subtle);
+  transition: transform 0.25s ease, color 0.2s ease;
+}
+
+.care-card.active .card-arrow {
+  transform: rotate(90deg);
+  color: var(--crimson-core);
+}
+
+/* Accordion Content */
+.care-card-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 0 0.95rem;
+}
+
+.care-card.active .care-card-content {
+  grid-template-rows: 1fr;
+  padding-bottom: 0.9rem;
+}
+
+.content-inner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.content-inner p {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #b8c1d6;
+}
+
+.content-inner strong {
+  color: #ffa4b6;
+  font-weight: 700;
+}
+
+.tip-tags {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.22rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-muted);
+}
+
+/* Mobile Drawer Trigger */
+.mobile-drawer-trigger {
+  display: none;
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 30;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  color: var(--text-white);
+  font-family: var(--font-main);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   Center 3D Hologram Heart Stage
+   -------------------------------------------------------------------------- */
+.heart-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
+  perspective-origin: center center;
+}
+
+/* Volumetric Spotlight */
+.cardiac-spotlight {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(75vw, 620px);
+  height: min(75vw, 620px);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--crimson-ambient) 0%, rgba(220, 20, 60, 0.03) 50%, transparent 72%);
+  pointer-events: none;
+  z-index: 2;
+  filter: blur(50px);
+  animation: cardiacAura 3.6s ease-in-out infinite alternate;
+}
+
+/* Sonar Wave */
+.cardiac-sonar-ring {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 42, 95, 0.4);
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  animation: shockwavePulse var(--cardiac-cycle-duration, 0.8s) cubic-bezier(0.1, 0.8, 0.2, 1) infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Real Anatomical Heart Stage & 3D Interactive Presentation
+   -------------------------------------------------------------------------- */
+.real-heart-wrapper {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  will-change: transform;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Pulsing Heart Animation with Helical Systolic Torsion */
+.real-heart-pulse {
+  position: relative;
+  width: clamp(230px, 27vw, 350px);
+  max-width: 90vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform-origin: 50% 45%;
+  transform-style: preserve-3d;
+  will-change: transform, filter;
+  animation: realCardiacCycle var(--cardiac-cycle-duration, 0.8s) cubic-bezier(0.2, 0.85, 0.35, 1) infinite;
+  transition: transform 0.15s ease-out;
+}
+
+.real-heart-pulse:active {
+  transform: scale3d(0.92, 0.92, 0.92);
+}
+
+/* Real Heart Cutout Image */
+.real-heart-img {
+  width: 100%;
+  height: auto;
+  max-height: 52vh;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 20px 42px rgba(0, 0, 0, 0.92))
+          drop-shadow(0 0 50px rgba(255, 30, 86, 0.3));
+  transition: filter 0.3s ease;
+}
+
+.real-heart-wrapper:hover .real-heart-img {
+  filter: drop-shadow(0 26px 54px rgba(220, 20, 60, 0.45))
+          drop-shadow(0 0 70px rgba(255, 42, 95, 0.4));
+}
+
+/* Physiological Double-Beat Systolic Ejection with Helical Torsion */
+@keyframes realCardiacCycle {
+  0% {
+    transform: scale3d(1, 1, 1) rotate(0deg);
+  }
+  /* Atrial pre-pulse kick */
+  12% {
+    transform: scale3d(1.045, 1.02, 1.03) rotate(-1deg) translateY(-2px);
+  }
+  /* Isovolumetric tension drop */
+  22% {
+    transform: scale3d(0.985, 0.99, 0.985) rotate(0.2deg);
+  }
+  /* Peak Ventricular Systole (Ejection + Torsion) */
+  38% {
+    transform: scale3d(1.14, 1.085, 1.15) rotate(2deg) translateY(-6px);
+  }
+  /* Rapid ejection plateau */
+  50% {
+    transform: scale3d(1.07, 1.045, 1.08) rotate(0.9deg) translateY(-3px);
+  }
+  /* Isovolumetric relaxation & filling */
+  70% {
+    transform: scale3d(1.01, 1.01, 1.01) rotate(-0.3deg);
+  }
+  100% {
+    transform: scale3d(1, 1, 1) rotate(0deg);
+  }
+}
+
+/* Internal Arterial Blood Surge Glow Overlay */
+.heart-artery-glow {
+  position: absolute;
+  top: 15%;
+  left: 20%;
+  width: 60%;
+  height: 65%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 42, 95, 0.35) 0%, rgba(255, 30, 86, 0.1) 45%, transparent 70%);
+  mix-blend-mode: color-dodge;
+  pointer-events: none;
+  filter: blur(14px);
+  animation: arteryLuminousSurge var(--cardiac-cycle-duration, 0.8s) ease-in-out infinite;
+}
+
+@keyframes arteryLuminousSurge {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.95);
+  }
+  38% {
+    opacity: 0.9;
+    transform: scale(1.15);
+  }
+}
+
+/* Dynamic Specular Glint that shifts with pointer */
+.heart-specular-glint {
+  position: absolute;
+  inset: 0;
+  border-radius: 45%;
+  background: radial-gradient(circle at var(--glint-x, 45%) var(--glint-y, 35%), rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.08) 25%, transparent 60%);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+/* Floor Contact Shadow Projection */
+.heart-floor-shadow {
+  width: calc(var(--heart-size) * 0.82);
+  height: 22px;
+  margin-top: 1rem;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(180, 10, 45, 0.42) 0%, rgba(0, 0, 0, 0.88) 55%, transparent 75%);
+  filter: blur(10px);
+  animation: cardiacShadow var(--cardiac-cycle-duration, 0.8s) cubic-bezier(0.2, 0.85, 0.35, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes cardiacShadow {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  38% { transform: scale(1.22); opacity: 0.95; }
+}
+
+/* Stage HUD Tag */
+.stage-hud-badge {
+  position: absolute;
+  bottom: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.28rem 0.85rem;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 15;
+}
+
+.hud-crosshair {
+  color: var(--crimson-core);
+  font-size: 0.72rem;
+}
+
+/* --------------------------------------------------------------------------
+   Bottom Telemetry Console (CRT Oscilloscope & Speed Controls)
+   -------------------------------------------------------------------------- */
+.telemetry-console {
+  position: relative;
+  z-index: 20;
+  width: min(94vw, 840px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+}
+
+.console-upper-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.3rem;
+}
+
+.lead-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.lead-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(0, 245, 160, 0.12);
+  border: 1px solid rgba(0, 245, 160, 0.3);
+  color: #00ffaa;
+}
+
+.lead-spec,
+.lead-filter {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-subtle);
+}
+
+.phase-indicator-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+}
+
+.phase-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--ecg-emerald);
+  box-shadow: 0 0 6px var(--ecg-emerald);
+  transition: all 0.15s ease;
+}
+
+.phase-name {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: color 0.15s ease;
+}
+
+/* Oscilloscope Frame */
+.ecg-monitor-frame {
+  position: relative;
+  width: 100%;
+  height: 86px;
+  background: rgba(4, 7, 12, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(0, 245, 160, 0.22);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), inset 0 0 25px rgba(0, 0, 0, 0.9);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ecg-monitor-frame.pulse-flash {
+  border-color: rgba(0, 245, 160, 0.55);
+  box-shadow: 0 10px 38px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 245, 160, 0.22), inset 0 0 35px rgba(0, 245, 160, 0.12);
+}
+
+#ecgCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+/* CRT Scanlines */
+.ecg-crt-scanlines {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 3px;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.65;
+}
+
+/* Grid Overlay */
+.ecg-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: 20px 20px, 4px 4px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 245, 160, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 245, 160, 0.05) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Controls Row */
+.telemetry-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pace-presets {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.pace-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.7rem;
+  background: var(--bg-card);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+}
+
+.pace-btn:hover {
+  background: var(--bg-card-hover);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.pace-btn.active {
+  background: rgba(0, 245, 160, 0.14);
+  border-color: rgba(0, 245, 160, 0.45);
+  color: #00ffaa;
+  box-shadow: 0 0 15px rgba(0, 245, 160, 0.2);
+}
+
+.pace-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pace-label {
+  font-family: var(--font-main);
+  font-weight: 500;
+  font-size: 0.68rem;
+  color: var(--text-subtle);
+}
+
+.pace-btn.active .pace-label {
+  color: rgba(0, 255, 170, 0.75);
+}
+
+/* Precision Slider */
+.pace-slider-unit {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--bg-card);
+  padding: 0.28rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-glass);
+  margin-left: auto;
+}
+
+.slider-text-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.slider-title {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.slider-val-badge {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #00ffaa;
+}
+
+#speedSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#speedSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00ffaa;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 245, 160, 0.9);
+  transition: transform 0.15s ease;
+}
+
+#speedSlider::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+
+#speedSlider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00ffaa;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 245, 160, 0.9);
+}
+
+/* --------------------------------------------------------------------------
+   Tactile Click Sparks
+   -------------------------------------------------------------------------- */
+.click-spark {
+  position: absolute;
+  pointer-events: none;
+  font-size: 1.25rem;
+  user-select: none;
+  z-index: 40;
+  animation: sparkFly 0.9s cubic-bezier(0.15, 0.9, 0.25, 1) forwards;
+}
+
+@keyframes sparkFly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.6) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(1.3) rotate(var(--rot));
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Accessibility: prefers-reduced-motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .cardiac-spotlight,
+  .cardiac-sonar-ring,
+  .aortic-arch,
+  .coronary-artery,
+  .heart-floor-shadow,
+  .heart-pulse {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .vital-led,
+  .phase-dot {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .heart-rotator {
+    transform: none !important;
+  }
+
+  .click-spark {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mobile & Responsive Adaptations
+   -------------------------------------------------------------------------- */
+@media (max-width: 1040px) {
+  .vitals-strip .vital-item:nth-child(n+5) {
+    display: none; /* Hide SpO2 and Cardiac Output on compact tablets */
+  }
+
+  .care-console {
+    top: auto;
+    bottom: 100px;
+    left: 0.75rem;
+    transform: none;
+    width: calc(100vw - 1.5rem);
+    max-height: 48vh;
+    display: none;
+  }
+
+  .care-console.mobile-open {
+    display: flex;
+  }
+
+  .mobile-drawer-trigger {
+    display: block;
+  }
+
+  .console-toggle-btn {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  :root {
+    --heart-size: clamp(160px, 45vw, 220px);
+  }
+
+  .dashboard-container {
+    padding: 0.5rem;
+  }
+
+  .brand-sub {
+    display: none;
+  }
+
+  .vitals-strip {
+    padding: 0.25rem 0.65rem;
+  }
+
+  .vitals-strip .vital-item:not(.main-hr) {
+    display: none; /* Show only HR on phones */
+  }
+
+  .vital-divider {
+    display: none;
+  }
+
+  .lead-spec,
+  .lead-filter {
+    display: none;
+  }
+
+  .ecg-monitor-frame {
+    height: 68px;
+  }
+
+  .pace-btn {
+    padding: 0.24rem 0.5rem;
+    font-size: 0.66rem;
+  }
+
+  .pace-slider-unit {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+
+  #speedSlider {
+    width: 120px;
+  }
+}
